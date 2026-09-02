@@ -12,7 +12,20 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Propres au projet :
+    "src/generated/**",              // client Prisma généré
+    "Identity visual from image/**", // dossier de remise du design (référence)
   ]),
+  {
+    rules: {
+      // `const { honeypot, ...data } = parsed.data` retire volontairement un
+      // champ avant l'insertion en base : ce n'est pas une variable oubliée.
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { ignoreRestSiblings: true, argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;
