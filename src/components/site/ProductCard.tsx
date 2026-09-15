@@ -37,7 +37,7 @@ export default function ProductCard({ product, categorySlug, discountPct = 0 }: 
         {img ? (
           <Image src={img.url} alt={img.alt} width={460} height={150} style={{ width: "100%", height: 150, objectFit: "cover" }} />
         ) : (
-          <ImagePlaceholder height={150} />
+          <ImagePlaceholder height={150} alt={`Visuel provisoire : photo du produit « ${product.name} » à venir`} />
         )}
       </Link>
       <div className="carte__corps">

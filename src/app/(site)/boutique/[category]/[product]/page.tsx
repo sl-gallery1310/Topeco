@@ -41,7 +41,7 @@ export default async function ProductPage({ params }: Params) {
 
       <div className="conteneur" style={{ paddingTop: "clamp(28px,3vw,44px)", paddingBottom: "var(--section-y)" }}>
         <div className="grille" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))", gap: "clamp(24px,3vw,44px)" }}>
-          <Gallery images={product.images} />
+          <Gallery images={product.images} productName={product.name} />
 
           <div>
             <h1 style={{ fontSize: "clamp(26px,3vw,36px)", lineHeight: 1.15 }}>{product.name}</h1>

@@ -20,7 +20,8 @@ export default function Header() {
     <header className="entete sur-bleu">
       <div className="conteneur entete__barre">
         <Link href="/" className="marque" aria-label="TOPECO — accueil">
-          <Image src="/mark-white.svg" alt="" width={34} height={34} priority />
+          {/* Décoratif : le lien est nommé par aria-label et le mot TOPECO suit. */}
+          <Image src="/mark-white.svg" alt="" aria-hidden="true" width={34} height={34} priority />
           <span className="marque__mot">TOP<em>ECO</em></span>
         </Link>
 

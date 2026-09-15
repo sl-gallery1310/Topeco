@@ -264,8 +264,9 @@ que les pages n’existent pas (`src/app/admin/layout.tsx`).
    juridique. Le seed ne réécrit jamais une page modifiée au back-office.
    `/plan-du-site` n’est pas une page du back-office : c’est une route générée depuis la
    base (`src/app/(site)/plan-du-site`), à jour sans intervention.
-5. **Placeholders `[entre crochets]`** des mentions légales à remplir
-   (voir `readme-projet-etudiant.txt`).
+5. ~~**Placeholders `[entre crochets]`** des mentions légales~~ — fait : éditeur et
+   hébergeur repris du cahier des charges (sections H.1/H.2) dans `prisma/pages-contenu.ts`.
+   Les trames `/cgv`, `/confidentialite` et `/accessibilite` gardent les leurs (point 4).
 6. **Catalogue complet** : 9 produits sont seedés, le prototype en annonce 34.
 7. **Factures et fiches de recyclabilité** : déposer les PDF dans `private/uploads/...`
    (factures, servies par `/api/factures/[reference]`) et `public/uploads/fiches/...`.
@@ -336,6 +337,11 @@ DATABASE_URL="mysql://…prod…" npm run db:seed             # catégories, pro
 
 Le seed est idempotent (upserts) : le rejouer ne duplique rien. Il crée les deux comptes
 de la section 2 — **changer leurs mots de passe immédiatement après**.
+
+Rejoué sur une base existante, il corrige aussi deux contenus posés par une version
+antérieure, et l’annonce dans la console : les mentions légales encore en `[crochets]`, et
+la fiche pailles vendue en lot de 50 à 24,90 € HT (désormais lot de 10 à 18,00 € HT, prix
+unique, conformément au cahier des charges, section C.3).
 
 Les migrations suivantes se rejouent de la même manière. Ne pas mettre `migrate deploy`
 dans la commande de build : deux builds simultanés se marcheraient dessus.

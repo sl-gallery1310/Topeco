@@ -190,17 +190,18 @@ async function main() {
     { sku: "TPE-CON-CVB500", slug: "couverts-bois-certifie", categoryId: cConsommables.id, name: "Couverts bois certifié", lotLabel: "Lot de 500 · fourchette + couteau", priceHt: eur(3.20) },
     { sku: "TPE-HYG-DES5L", slug: "desinfectant-contact-alimentaire-5l", categoryId: cHygiene.id, name: "Désinfectant contact alimentaire 5 L", lotLabel: "Bidon de 5 L · sans rinçage", priceHt: eur(6.30) },
     {
+      // Lot de 10 à 18,00 € HT / 21,60 € TTC, prix unique sans palier : préconisation du
+      // cahier des charges (C.3). Référence et adresse restent celles de la fiche d'origine.
       sku: "TPE-INX-050", slug: "lot-50-pailles-inox", categoryId: cPailles.id,
-      name: "Lot de 50 pailles inox réutilisables", lotLabel: "Lot de 50 · goupillon inclus",
-      specLine: "inox 18/8 · 21,5 cm · goupillon inclus", priceHt: eur(24.90),
+      name: "Lot de 10 pailles inox réutilisables", lotLabel: "Lot de 10 · goupillon inclus",
+      specLine: "inox 18/8 · 21,5 cm · goupillon inclus", priceHt: eur(18.00),
       material: Material.INOX, warranty: true, sample: true,
-      tiers: [[1, 4, eur(24.90)], [5, 9, eur(22.40)], [10, 24, eur(19.90)], [25, null, eur(17.40)]],
       descriptionHtml:
         "<p>Paille droite en inox 18/8 alimentaire, diamètre intérieur 6 mm, longueur 21,5 cm : la hauteur d’un verre à cocktail standard. Passe au lave-vaisselle en panier à couverts, ne transmet aucun goût et ne se déforme pas à l’usage. Le goupillon nylon fourni nettoie l’intérieur en un passage.</p>",
       bullets: [
         "Inox 18/8 alimentaire, sans revêtement ni soudure apparente",
         "Compatible lave-vaisselle professionnel, cycle 60 °C",
-        "Goupillon de nettoyage nylon inclus pour 50 pailles",
+        "Goupillon de nettoyage nylon inclus dans chaque lot",
         "Garantie à vie contre la déformation et la corrosion",
       ],
     },
@@ -242,6 +243,24 @@ async function main() {
         });
       }
     }
+  }
+
+  // Base seedée avant la préconisation C.3 : l'upsert ci-dessus ne réécrit pas une fiche
+  // existante, qui vendrait encore le lot de 50 à 24,90 € HT. Corrigée tant qu'elle porte
+  // l'ancien nom — une retouche faite depuis au back-office n'est pas écrasée. Les paliers
+  // sont supprimés d'abord : si la mise à jour échoue, le prochain seed reprend tout.
+  const pailles = products.find((p) => p.sku === "TPE-INX-050")!;
+  const paillesPerimees = await db.product.findFirst({
+    where: { sku: pailles.sku, name: "Lot de 50 pailles inox réutilisables" },
+    select: { id: true },
+  });
+  if (paillesPerimees) {
+    await db.priceTier.deleteMany({ where: { productId: paillesPerimees.id } });
+    await db.product.update({
+      where: { id: paillesPerimees.id },
+      data: { name: pailles.name, lotLabel: pailles.lotLabel, basePriceHt: pailles.priceHt, bullets: pailles.bullets },
+    });
+    console.log(`Produit ${pailles.sku} : lot de 10 à 18,00 € HT, paliers supprimés.`);
   }
 
   /* ---------------------------------------------------------------- RÉSEAU */
@@ -329,7 +348,7 @@ async function main() {
         lines: {
           create: [
             { productId: bySku["TPE-EMB-BFM750"], sku: "TPE-EMB-BFM750", name: "Barquette fibre moulée 750 ml", qty: 4, unitPriceHt: eur(35.11), lineTotalHt: eur(140.44) },
-            { productId: bySku["TPE-INX-050"], sku: "TPE-INX-050", name: "Lot de 50 pailles inox réutilisables", qty: 2, unitPriceHt: eur(21.91), lineTotalHt: eur(43.82) },
+            { productId: bySku["TPE-INX-050"], sku: "TPE-INX-050", name: "Lot de 10 pailles inox réutilisables", qty: 2, unitPriceHt: eur(15.84), lineTotalHt: eur(31.68) },
           ],
         },
       },
@@ -381,29 +400,17 @@ async function main() {
   }
 
   /* ---------------------------------------------------------------- PAGES + RÉGLAGES */
-  await db.page.upsert({
-    where: { slug: "mentions-legales" },
-    update: {},
-    create: {
-      slug: "mentions-legales",
-      title: "Mentions légales",
-      bodyBlocks: [
-        { type: "disclaimer", text: "Ce site est réalisé dans le cadre d’un projet étudiant fictif. Aucun achat, aucun devis et aucune réservation ne peuvent réellement être effectués." },
-        { type: "h2", text: "Éditeur du site" },
-        { type: "p", text: "TOPECO, marque de GWESERG, SARL fondée en 2012 — [numéro de groupe], [établissement]." },
-        { type: "h2", text: "Hébergement" },
-        { type: "p", text: "[nom de l’hébergeur], [adresse], [téléphone]." },
-      ],
-    },
-  });
   // Pages libres de la navigation et du pied de page (prisma/pages-contenu.ts).
   // Créée si absente, remplie si son corps est encore vide (ancien brouillon du
-  // prototype), et sinon laissée intacte : une page retouchée au back-office
-  // n'est jamais écrasée par un nouveau seed.
+  // prototype) ou s'il contient un texte de version périmée (perimeeSi), et sinon
+  // laissée intacte : une page retouchée au back-office n'est jamais écrasée.
   for (const pg of PAGES_CONTENU) {
     const existante = await db.page.findUnique({ where: { slug: pg.slug }, select: { bodyBlocks: true } });
     const vide = !existante || !Array.isArray(existante.bodyBlocks) || existante.bodyBlocks.length === 0;
-    if (!vide) continue;
+    const corps = JSON.stringify(existante?.bodyBlocks ?? []);
+    const perimee = pg.perimeeSi?.some((texte) => corps.includes(texte)) ?? false;
+    if (!vide && !perimee) continue;
+    if (perimee) console.log(`Page /${pg.slug} : version périmée remplacée.`);
     const data = {
       title: pg.title,
       introHtml: pg.introHtml ?? null,

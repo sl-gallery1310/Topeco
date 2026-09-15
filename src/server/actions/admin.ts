@@ -4,6 +4,7 @@ import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
+import { titreTropLong } from "@/lib/blocks";
 import { productSchema, fieldErrors, type FieldErrors } from "@/lib/validation";
 
 export type AdminState = { ok?: boolean; errors?: FieldErrors };
@@ -161,6 +162,8 @@ export async function savePage(_prev: AdminState, fd: FormData): Promise<AdminSt
   } catch {
     errors.bodyBlocks = ["Le corps doit être un tableau JSON de blocs."];
   }
+  const titreLong = Array.isArray(bodyBlocks) && titreTropLong(bodyBlocks);
+  if (titreLong) errors.bodyBlocks = [titreLong];
 
   // Le slug est unique : on le vérifie avant d'écrire pour rendre une erreur de champ
   // plutôt qu'une erreur de base.
@@ -230,6 +233,8 @@ export async function saveArticle(_prev: AdminState, fd: FormData): Promise<Admi
   } catch {
     errors.bodyBlocks = ["Le corps doit être un tableau JSON de blocs."];
   }
+  const titreLong = Array.isArray(bodyBlocks) && titreTropLong(bodyBlocks);
+  if (titreLong) errors.bodyBlocks = [titreLong];
 
   const clash = await db.article.findUnique({ where: { slug }, select: { id: true } });
   if (clash && clash.id !== id) errors.slug = ["Un article utilise déjà cette adresse."];

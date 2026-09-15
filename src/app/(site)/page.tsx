@@ -35,7 +35,7 @@ export default async function Home() {
           </div>
           <div style={{ justifySelf: "center" }}>
             {/* À remplacer par une photographie produit réelle */}
-            <Image src="/mark-white.svg" alt="" width={300} height={300} style={{ width: "min(300px, 70%)", height: "auto" }} priority />
+            <Image src="/mark-white.svg" alt="Logo TOPECO" width={300} height={300} style={{ width: "min(300px, 70%)", height: "auto" }} priority />
           </div>
         </div>
       </section>
@@ -53,9 +53,10 @@ export default async function Home() {
               return (
                 <Link key={c.id} href={`/boutique/${c.slug}`} className="carte">
                   {c.imageUrl ? (
-                    <Image src={c.imageUrl} alt={c.imageAlt ?? ""} width={460} height={168} style={{ width: "100%", height: 168, objectFit: "cover" }} />
+                    <Image src={c.imageUrl} alt={c.imageAlt || c.name} width={460} height={168} style={{ width: "100%", height: 168, objectFit: "cover" }} />
                   ) : (
-                    <ImagePlaceholder height={168} label={c.placeholderLabel ?? "VISUEL À VENIR"} />
+                    <ImagePlaceholder height={168} label={c.placeholderLabel ?? "VISUEL À VENIR"}
+                      alt={`Visuel provisoire : photo de la catégorie « ${c.name} » à venir`} />
                   )}
                   <div className="carte__corps">
                     <h3>{c.name}</h3>
@@ -135,7 +136,8 @@ export default async function Home() {
             ["Pailles inox garanties à vie", "Remplacement en cas de déformation ou de corrosion, sans justificatif."],
           ].map(([titre, texte]) => (
             <div key={titre} className="panneau" style={{ padding: 26 }}>
-              <Image src="/mark.svg" alt="" width={34} height={34} />
+              {/* Puce décorative : le titre qui suit porte l’information, alt vide voulu. */}
+              <Image src="/mark.svg" alt="" aria-hidden="true" width={34} height={34} />
               <h3 style={{ marginTop: 16 }}>{titre}</h3>
               <p style={{ marginTop: 10, fontSize: 15, color: "var(--texte-3)" }}>{texte}</p>
             </div>

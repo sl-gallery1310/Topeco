@@ -1,5 +1,5 @@
 "use client";
-import { BLOCK_LABELS, type Block } from "@/lib/blocks";
+import { BLOCK_LABELS, TITRE_MAX, type Block } from "@/lib/blocks";
 
 /**
  * Éditeur de blocs partagé par les pages de contenu et les articles de blog :
@@ -62,7 +62,15 @@ export default function BlockEditor({
             </span>
           </div>
 
-          {(b.type === "p" || b.type === "h2" || b.type === "h3" || b.type === "disclaimer") && (
+          {/* Un titre tient sur une ligne : le texte qui le suit va dans un bloc Paragraphe. */}
+          {(b.type === "h2" || b.type === "h3") && (
+            <div className="champ" style={{ marginTop: 12 }}>
+              <label htmlFor={"b" + i + "-text"}>Titre ({TITRE_MAX} caractères maximum)</label>
+              <input id={"b" + i + "-text"} value={b.text} maxLength={TITRE_MAX} onChange={(e) => maj(i, { text: e.target.value })} />
+            </div>
+          )}
+
+          {(b.type === "p" || b.type === "disclaimer") && (
             <div className="champ" style={{ marginTop: 12 }}>
               <label htmlFor={"b" + i + "-text"}>Texte</label>
               <textarea id={"b" + i + "-text"} value={b.text} onChange={(e) => maj(i, { text: e.target.value })} style={{ minHeight: b.type === "p" ? 110 : 60 }} />
@@ -91,7 +99,7 @@ export default function BlockEditor({
             <div className="admin__grille-champs" style={{ marginTop: 12 }}>
               <div className="champ">
                 <label htmlFor={"b" + i + "-t"}>Titre de l’encadré</label>
-                <input id={"b" + i + "-t"} value={b.title} onChange={(e) => maj(i, { title: e.target.value })} />
+                <input id={"b" + i + "-t"} value={b.title} maxLength={TITRE_MAX} onChange={(e) => maj(i, { title: e.target.value })} />
               </div>
               <div className="champ">
                 <label htmlFor={"b" + i + "-x"}>Texte</label>

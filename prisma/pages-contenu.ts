@@ -4,10 +4,13 @@
  * Règles de rédaction :
  * - « Nos engagements » ne reprend que des engagements DÉJÀ affichés ailleurs sur le site
  *   (accueil, catégories, fiches produit) : rien n'est inventé ici.
- * - Les pages juridiques suivent le motif de « Mentions légales » : avertissement
- *   « projet étudiant fictif », structure complète, et [crochets] pour chaque fait que
- *   seule l'entreprise peut fournir. Ce sont des trames, pas un avis juridique.
- * - Le seed ne remplace jamais une page modifiée au back-office (voir seed.ts).
+ * - « Mentions légales » reprend l'éditeur et l'hébergeur du cahier des charges
+ *   (sections H.1 et H.2).
+ * - Les autres pages juridiques gardent l'avertissement « projet étudiant fictif », une
+ *   structure complète, et [crochets] pour chaque fait que seule l'entreprise peut
+ *   fournir. Ce sont des trames, pas un avis juridique.
+ * - Le seed ne remplace jamais une page modifiée au back-office (voir seed.ts), sauf
+ *   si elle porte encore un marqueur de version périmée (perimeeSi).
  */
 import type { Block } from "../src/lib/blocks";
 
@@ -21,9 +24,45 @@ export type ContenuPage = {
   title: string;
   introHtml?: string;
   bodyBlocks: Block[];
+  /** Textes d'une ancienne version posée par le seed : s'il en reste un dans le corps enregistré, la page est réécrite. */
+  perimeeSi?: string[];
 };
 
 export const PAGES_CONTENU: ContenuPage[] = [
+  /* ----------------------------------------------------------- MENTIONS LÉGALES */
+  {
+    slug: "mentions-legales",
+    title: "Mentions légales",
+    bodyBlocks: [
+      FICTIF,
+      { type: "h2", text: "Éditeur du site" },
+      {
+        type: "list",
+        items: [
+          "TOPECO, marque de GWESERG, SARL au capital de 30 000 €",
+          "Siège social : 21 boulevard Pasteur, 94360 Bry-sur-Marne, France",
+          "SIRET 800 423 221 09015 — code APE/NAF 4690Z",
+          "Directeur de la publication : M. Gweserg, gérant",
+          "Contact : contact@topeco.fr — 01 48 82 14 30",
+          "Conception et réalisation : RECYCLAB, 106 place de la Madeleine, 75009 Paris",
+        ],
+      },
+      { type: "h2", text: "Hébergement" },
+      {
+        type: "list",
+        items: [
+          "Hébergeur : OVH SAS, filiale du groupe OVHcloud",
+          "Siège social : 2 rue Kellermann, 59100 Roubaix, France",
+          "Forme juridique : société par actions simplifiée au capital de 50 000 000 €",
+          "RCS Lille Métropole 424 761 419",
+          "Téléphone : 1007 (numéro non surtaxé)",
+        ],
+      },
+    ],
+    // Première trame, restée en ligne avec ses crochets.
+    perimeeSi: ["[numéro de groupe]", "[établissement]", "[téléphone]"],
+  },
+
   /* ------------------------------------------------------------ NOS ENGAGEMENTS */
   {
     slug: "nos-engagements",

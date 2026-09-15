@@ -4,9 +4,14 @@ import Image from "next/image";
 import ImagePlaceholder from "@/components/site/ImagePlaceholder";
 
 /** Galerie : vignette cliquable au clic et au clavier (bouton natif). */
-export default function Gallery({ images }: { images: { id: number; url: string; alt: string }[] }) {
+export default function Gallery({ images, productName }: { images: { id: number; url: string; alt: string }[]; productName: string }) {
   const [active, setActive] = useState(0);
-  if (images.length === 0) return <ImagePlaceholder height={300} label="PHOTOGRAPHIE PRODUIT À VENIR" markSize={56} />;
+  if (images.length === 0) {
+    return (
+      <ImagePlaceholder height={300} label="PHOTOGRAPHIE PRODUIT À VENIR" markSize={56}
+        alt={`Visuel provisoire : photo du produit « ${productName} » à venir`} />
+    );
+  }
 
   return (
     <div>

@@ -22,6 +22,21 @@ export const BLOCK_LABELS: Record<Block["type"], string> = {
   image: "Image",
 };
 
+/** Longueur maximale d’un titre de bloc (H2, H3, titre d’encadré) : au-delà, c’est un paragraphe. */
+export const TITRE_MAX = 120;
+
+/** Message d’erreur pour le premier titre de bloc trop long, ou null. */
+export function titreTropLong(blocks: unknown[]): string | null {
+  const i = blocks.findIndex((b) => {
+    const { type, text, title } = (b ?? {}) as { type?: string; text?: unknown; title?: unknown };
+    const titre = type === "h2" || type === "h3" ? text : type === "greenCallout" ? title : "";
+    return typeof titre === "string" && titre.length > TITRE_MAX;
+  });
+  return i === -1
+    ? null
+    : `Bloc ${i + 1} : un titre ne dépasse pas ${TITRE_MAX} caractères. Placez le texte dans un bloc « Paragraphe » à la suite.`;
+}
+
 /** Texte brut d’un corps d’article — sert au temps de lecture et au SEO. */
 export function blocksToText(blocks: Block[]): string {
   return blocks
