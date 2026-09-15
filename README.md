@@ -104,7 +104,7 @@ sauter `npm run db:up`.
 ├─ docker/mysql/init/        # droits « shadow database » (dev uniquement)
 ├─ prisma7.config.ts         # config CLI Prisma 7 (URL, chemin des migrations, seed)
 ├─ prisma/
-│  ├─ schema.prisma          # 25 modèles : catalogue, réseau, éditorial, comptes, commerce, formulaires, RGPD
+│  ├─ schema.prisma          # 29 modèles : catalogue, réseau, éditorial, comptes, commerce, formulaires, RGPD
 │  ├─ migrations/            # SQL généré
 │  └─ seed.ts                # tout le contenu du prototype, idempotent
 ├─ sql/README.md             # création base, migrations, dump
@@ -286,16 +286,40 @@ il n’est pas fait pour être exposé.
 ### 8.1 Base de données managée
 
 Vercel et Netlify n’hébergent pas de MySQL : il faut une base ailleurs, joignable depuis
-Internet et en TLS.
+Internet et en TLS. Le MySQL d’un hébergement mutualisé convient rarement : il n’accepte
+en général que des connexions locales, et les IP de Vercel changent sans cesse.
 
-| Hébergeur | Remarque |
-|---|---|
-| Railway, Aiven, Clever Cloud, Scaleway, OVH, PlanetScale | tous conviennent |
-| **PlanetScale** | n’applique pas les clés étrangères : ajouter `relationMode = "prisma"` au bloc `datasource` **avant** la première migration, sinon les relations du schéma ne sont pas garanties |
+| Hébergeur | Gratuit | Remarque |
+|---|:---:|---|
+| **TiDB Cloud Starter** *(recommandé)* | oui | compatible MySQL, pris en charge par Prisma. Certificats Let’s Encrypt, déjà reconnus par Node : `ssl=true` suffit, aucun fichier de certificat. Choix de la région. Port **4000**. |
+| Aiven for MySQL | oui | 1 Go de disque, 76 connexions max. Région **imposée**, service **éteint après inactivité** (réactivation manuelle), certificat signé par l’autorité d’Aiven : il faudrait ajouter sa prise en charge dans `src/lib/db.ts`. |
+| Railway, Clever Cloud, Scaleway, OVH | payant | conviennent, quelques euros par mois |
+| PlanetScale | payant | n’applique pas les clés étrangères : ajouter `relationMode = "prisma"` au bloc `datasource` **avant** la première migration |
 
-Récupérer l’URL de connexion au format
-`mysql://utilisateur:motdepasse@hôte:3306/base?sslaccept=strict` (le paramètre TLS varie
-selon l’hébergeur) et la garder pour l’étape suivante.
+#### Format de `DATABASE_URL`
+
+```
+mysql://UTILISATEUR:MOTDEPASSE@HÔTE:PORT/BASE?ssl=true&sslaccept=strict&connectionLimit=3
+```
+
+La même URL sert à deux lecteurs qui ne comprennent pas les mêmes paramètres :
+
+| Paramètre | Lu par | Effet |
+|---|---|---|
+| `ssl=true` | le pilote `mariadb` (l’application) | active TLS et vérifie le certificat du serveur |
+| `sslaccept=strict` | la CLI Prisma (`migrate deploy`) | active TLS côté migrations |
+| `connectionLimit=3` | le pilote `mariadb` | taille du pool par instance serverless (10 par défaut) |
+
+Chacun ignore les paramètres de l’autre. **`sslaccept=strict` seul ne suffit pas** : le
+pilote l’ignore et l’application se connecterait sans TLS — ou serait refusée par un
+hébergeur qui l’exige. Un mot de passe contenant `@`, `:`, `/` ou `?` doit être encodé
+(`encodeURIComponent`).
+
+#### Région
+
+Vercel exécute les fonctions à Washington (`iad1`) par défaut. Avec une base en Europe,
+chaque requête SQL traverserait l’Atlantique : régler **Settings → Functions → Region** sur
+`fra1` (Francfort) ou `cdg1` (Paris), et créer la base dans la même zone.
 
 ### 8.2 Appliquer le schéma et le contenu
 
@@ -303,7 +327,7 @@ Depuis un poste, en pointant sur la base de production — jamais `migrate dev`,
 compare et peut réinitialiser :
 
 ```bash
-DATABASE_URL="mysql://…prod…" npx prisma migrate deploy   # crée les 25 tables
+DATABASE_URL="mysql://…prod…" npx prisma migrate deploy   # crée les 29 tables
 DATABASE_URL="mysql://…prod…" npm run db:seed             # catégories, produits, pages, comptes
 ```
 
@@ -322,9 +346,9 @@ dans la commande de build : deux builds simultanés se marcheraient dessus.
    *Preview* si les aperçus doivent fonctionner). `NEXT_PUBLIC_SITE_URL` = l’URL réelle.
 3. Déployer, puis exécuter les commandes de la section 8.2 si ce n’est pas déjà fait.
 
-À surveiller : chaque instance serverless ouvre son propre pool de connexions. Sur une
-base à quota serré, réduire le pool via l’URL (`?connectionLimit=3`) ou passer par le
-pooler de l’hébergeur.
+À surveiller : chaque instance serverless ouvre son propre pool de connexions, d’où le
+`connectionLimit=3` de l’URL (8.1). Sur une base à quota serré, le baisser encore ou passer
+par le pooler de l’hébergeur.
 
 ### 8.4 Netlify
 

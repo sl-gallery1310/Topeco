@@ -202,32 +202,91 @@ export async function togglePagePublished(fd: FormData) {
 
 /* ------------------------------------------------------------------ ARTICLES */
 
-export async function saveArticle(fd: FormData) {
+/**
+ * Articles de blog. Même motif que savePage : validation, erreurs par champ,
+ * corps en blocs JSON.
+ */
+export async function saveArticle(_prev: AdminState, fd: FormData): Promise<AdminState> {
   await requireAdmin();
   const id = fd.get("id") ? Number(fd.get("id")) : null;
-  let bodyBlocks: unknown;
+
+  const slug = String(fd.get("slug") || "").trim().toLowerCase();
+  const title = String(fd.get("title") || "").trim();
+  const dek = String(fd.get("dek") || "").trim();
+  const categoryId = Number(fd.get("categoryId"));
+
+  const errors: FieldErrors = {};
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+    errors.slug = ["Adresse invalide : minuscules, chiffres et tirets uniquement."];
+  }
+  if (title.length < 2) errors.title = ["Le titre est obligatoire."];
+  if (dek.length < 2) errors.dek = ["Le chapô est obligatoire : il s'affiche dans la liste du blog."];
+  if (!Number.isInteger(categoryId) || categoryId <= 0) errors.categoryId = ["Choisissez une rubrique."];
+
+  let bodyBlocks: unknown = [];
   try {
     bodyBlocks = JSON.parse(String(fd.get("bodyBlocks") || "[]"));
+    if (!Array.isArray(bodyBlocks)) throw new Error("pas un tableau");
   } catch {
-    return;
+    errors.bodyBlocks = ["Le corps doit être un tableau JSON de blocs."];
   }
+
+  const clash = await db.article.findUnique({ where: { slug }, select: { id: true } });
+  if (clash && clash.id !== id) errors.slug = ["Un article utilise déjà cette adresse."];
+
+  if (Object.keys(errors).length) return { ok: false, errors };
+
+  const publie = fd.get("published") === "on";
+  // La date de publication est posée à la première mise en ligne et conservée
+  // ensuite : la réécrire à chaque enregistrement ferait remonter l'article.
+  const existant = id
+    ? await db.article.findUnique({ where: { id }, select: { publishedAt: true } })
+    : null;
+
   const data = {
-    slug: String(fd.get("slug")),
-    title: String(fd.get("title")),
-    dek: String(fd.get("dek")),
+    slug,
+    title,
+    dek,
     eyebrow: String(fd.get("eyebrow") || "") || null,
-    categoryId: Number(fd.get("categoryId")),
+    categoryId,
     featured: fd.get("featured") === "on",
-    published: fd.get("published") === "on",
-    publishedAt: fd.get("published") === "on" ? new Date() : null,
+    published: publie,
+    publishedAt: publie ? (existant?.publishedAt ?? new Date()) : null,
     heroImageUrl: String(fd.get("heroImageUrl") || "") || null,
     heroImageAlt: String(fd.get("heroImageAlt") || "") || null,
     disclaimerText: String(fd.get("disclaimerText") || "") || null,
+    seoTitle: String(fd.get("seoTitle") || "") || null,
+    seoDescription: String(fd.get("seoDescription") || "") || null,
     bodyBlocks: bodyBlocks as never,
   };
-  const row = id ? await db.article.update({ where: { id }, data }) : await db.article.create({ data });
-  await trace(id ? "update" : "create", "Article", row.id);
+
+  const row = id
+    ? await db.article.update({ where: { id }, data })
+    : await db.article.create({ data });
+
+  await trace(id ? "update" : "create", "Article", row.id, { slug: row.slug });
   revalidatePath("/blog");
   revalidatePath("/blog/" + row.slug);
+  revalidatePath("/admin/articles");
   redirect("/admin/articles");
+}
+
+export async function toggleArticlePublished(fd: FormData) {
+  await requireAdmin();
+  const id = Number(fd.get("id"));
+  const article = await db.article.findUnique({
+    where: { id },
+    select: { published: true, publishedAt: true, slug: true },
+  });
+  if (!article) return;
+
+  const publie = !article.published;
+  await db.article.update({
+    where: { id },
+    data: { published: publie, publishedAt: publie ? (article.publishedAt ?? new Date()) : null },
+  });
+  await trace("update", "Article", id, { published: publie });
+  revalidatePath("/blog");
+  revalidatePath("/blog/" + article.slug);
+  revalidatePath("/admin/articles");
 }

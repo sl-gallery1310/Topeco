@@ -16,7 +16,7 @@ import { currentUser } from "@/lib/auth";
  */
 const SECTIONS = [
   { titre: "Catalogue", liens: [["/admin/produits", "Produits"]] },
-  { titre: "Contenu", liens: [["/admin/pages", "Pages"]] },
+  { titre: "Contenu", liens: [["/admin/pages", "Pages"], ["/admin/articles", "Articles du blog"]] },
   { titre: "Commercial", liens: [["/admin/commandes", "Commandes et devis"], ["/admin/demandes", "Demandes reçues"]] },
   { titre: "Système", liens: [["/admin/reglages", "Réglages"]] },
 ];
