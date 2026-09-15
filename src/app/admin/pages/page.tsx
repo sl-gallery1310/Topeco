@@ -9,6 +9,7 @@ export const metadata: Metadata = { title: "Pages — back-office", robots: { in
 
 /**
  * Adresses attendues par la navigation (Header) et le pied de page (Footer).
+ * « Plan du site » n'y figure pas : c'est une route générée (src/app/(site)/plan-du-site).
  * Sans enregistrement `Page` publié, le lien renvoie une 404 : la liste le signale
  * pour que les pages manquantes soient visibles au lieu d'être découvertes en ligne.
  */
@@ -18,7 +19,6 @@ const ATTENDUES: [string, string][] = [
   ["cgv", "CGV"],
   ["cgu", "CGU"],
   ["confidentialite", "Politique de confidentialité"],
-  ["plan-du-site", "Plan du site"],
   ["accessibilite", "Accessibilité"],
 ];
 

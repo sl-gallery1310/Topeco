@@ -256,11 +256,14 @@ que les pages n’existent pas (`src/app/admin/layout.tsx`).
    revendeurs à côté reste le chemin accessible. Les tuiles viennent d’un tiers : elles
    ne posent pas de cookie, mais transmettent l’IP du visiteur — à arbitrer si le
    consentement doit les précéder.
-4. **Pages `/cgv`, `/cgu`, `/confidentialite`, `/accessibilite`, `/plan-du-site`,
-   `/nos-engagements`** : à rédiger et publier depuis `/admin/pages`, qui les signale tant
-   qu’elles manquent. Sans page publiée, le lien renvoie une 404. Le seed ne crée que
-   `mentions-legales` et un brouillon vide `nos-engagements` : les contenus sont à écrire,
-   ce ne sont pas des textes qu’un tiers peut inventer à votre place.
+4. **Pages d’information** : `/nos-engagements`, `/cgv`, `/cgu`, `/confidentialite` et
+   `/accessibilite` sont posées par le seed depuis `prisma/pages-contenu.ts`, publiées et
+   modifiables dans `/admin/pages`. « Nos engagements » ne reprend que des engagements
+   déjà affichés ailleurs sur le site ; les pages juridiques sont des **trames** : chaque
+   `[crochet]` est un fait que seule l’entreprise peut fournir, et elles ne valent pas avis
+   juridique. Le seed ne réécrit jamais une page modifiée au back-office.
+   `/plan-du-site` n’est pas une page du back-office : c’est une route générée depuis la
+   base (`src/app/(site)/plan-du-site`), à jour sans intervention.
 5. **Placeholders `[entre crochets]`** des mentions légales à remplir
    (voir `readme-projet-etudiant.txt`).
 6. **Catalogue complet** : 9 produits sont seedés, le prototype en annonce 34.

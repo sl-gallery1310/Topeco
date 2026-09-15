@@ -5,6 +5,11 @@
    ========================================================================== */
 
 :root {
+  /* La charte n'existe qu'en clair. Sans cette déclaration, les modes sombres
+     forcés du navigateur (Chrome « Auto Dark Mode », extensions de thème sombre)
+     assombrissent les fonds blancs en laissant certains textes foncés : ils
+     deviennent illisibles, c'est ce qui arrivait aux choix du bandeau cookies. */
+  color-scheme: light;
   --bleu: #2b4a9b;
   --bleu-fonce: #22397a;
   --vert: #88b04b;        /* accent : filets, bordures — jamais du texte ni un bouton */
@@ -247,6 +252,10 @@ input[type="range"]::-moz-range-thumb {
   padding: 20px var(--gouttiere);
 }
 .bandeau-cookies__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+/* Couleurs posées explicitement plutôt qu'héritées : le bandeau se superpose à
+   n'importe quelle section, y compris le pied de page bleu à texte blanc. */
+.bandeau-cookies { color: var(--texte); }
+.bandeau-cookies .case { color: var(--texte); font-weight: 600; }
 
 /* ---------------------------------------------------------------- article */
 .article-corps { font-size: 17px; line-height: 1.7; color: var(--texte-2); display: flex; flex-direction: column; gap: 20px; }

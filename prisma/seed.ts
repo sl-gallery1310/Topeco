@@ -7,6 +7,7 @@
 import { PrismaClient, Material, AgecStatus, ResellerType, ResellerStatus, TerritoryStatus, UserRole, OrderStatus, QuoteStatus } from "../src/generated/prisma/client";
 import bcrypt from "bcryptjs";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { PAGES_CONTENU } from "./pages-contenu";
 import "dotenv/config";
 
 // Prisma 7 : adaptateur de driver obligatoire.
@@ -395,17 +396,22 @@ async function main() {
       ],
     },
   });
-  await db.page.upsert({
-    where: { slug: "nos-engagements" },
-    update: {},
-    create: {
-      slug: "nos-engagements",
-      title: "Nos engagements",
-      introHtml: "<p>Page à rédiger : le lien existe dans la navigation du prototype sans page correspondante.</p>",
-      bodyBlocks: [],
-      published: false,
-    },
-  });
+  // Pages libres de la navigation et du pied de page (prisma/pages-contenu.ts).
+  // Créée si absente, remplie si son corps est encore vide (ancien brouillon du
+  // prototype), et sinon laissée intacte : une page retouchée au back-office
+  // n'est jamais écrasée par un nouveau seed.
+  for (const pg of PAGES_CONTENU) {
+    const existante = await db.page.findUnique({ where: { slug: pg.slug }, select: { bodyBlocks: true } });
+    const vide = !existante || !Array.isArray(existante.bodyBlocks) || existante.bodyBlocks.length === 0;
+    if (!vide) continue;
+    const data = {
+      title: pg.title,
+      introHtml: pg.introHtml ?? null,
+      bodyBlocks: pg.bodyBlocks,
+      published: true,
+    };
+    await db.page.upsert({ where: { slug: pg.slug }, update: data, create: { slug: pg.slug, ...data } });
+  }
 
   const settings = [
     ["contact.phone", "01 00 00 00 00", "Téléphone", "contact"],
